@@ -95,4 +95,4 @@ async def delete_parsed_entry(entry_id: str) -> None:
 
 
 async def close_redis() -> None:
-    await redis_client.close()
+    await redis_client.aclose()

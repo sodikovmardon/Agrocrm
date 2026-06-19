@@ -36,6 +36,8 @@ class Settings(BaseSettings):
     OPENAI_MAX_TOKENS: int = 2048
     OPENAI_TEMPERATURE: float = 0.3
 
+    DEFAULT_CURRENCY: str = "UZS"
+
     RATE_LIMIT_PER_MINUTE: int = 30
 
     REDIS_ENTRY_TTL_SECONDS: int = 3600

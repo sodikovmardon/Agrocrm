@@ -5,6 +5,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import settings
 from app.core.database import get_db
 from app.repositories.finance_repo import FinanceRepository
 from app.schemas.finance import (
@@ -143,7 +144,7 @@ async def get_finance_summary(
         total_income=float(total_income),
         total_expense=float(total_expense),
         net_profit=float(total_income - total_expense),
-        currency="UZS",
+        currency=settings.DEFAULT_CURRENCY,
         income_by_category=[CategoryBreakdown(**row) for row in income_breakdown],
         expense_by_category=[CategoryBreakdown(**row) for row in expense_breakdown],
     )

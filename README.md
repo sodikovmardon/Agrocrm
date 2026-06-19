@@ -74,9 +74,16 @@ JWT_SECRET_KEY=your-64-char-secret
 JWT_ALGORITHM=HS256
 JWT_ACCESS_TOKEN_EXPIRE_MINUTES=60
 OPENAI_API_KEY=sk-...
+DEFAULT_CURRENCY=UZS
 CELERY_BROKER_URL=redis://localhost:6379/1
 CELERY_RESULT_BACKEND=redis://localhost:6379/2
 DEBUG=true
+```
+
+## Tests
+```bash
+pip install -r requirements.txt
+pytest -q
 ```
 
 ## Project Structure

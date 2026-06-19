@@ -7,6 +7,7 @@ from sqlalchemy import DateTime, ForeignKey, Numeric, String, Text, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from app.core.config import settings
 from app.core.database import Base
 
 
@@ -39,7 +40,7 @@ class FinanceTransaction(Base):
     currency: Mapped[str] = mapped_column(
         String(10),
         nullable=False,
-        default="UZS",
+        default=settings.DEFAULT_CURRENCY,
     )
     description: Mapped[Optional[str]] = mapped_column(
         Text,

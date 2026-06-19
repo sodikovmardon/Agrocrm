@@ -5,6 +5,8 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field
 
+from app.core.config import settings
+
 
 INCOME_CATEGORIES = {"milk_sale", "egg_sale", "meat_sale", "animal_sale", "other_income"}
 EXPENSE_CATEGORIES = {
@@ -23,7 +25,7 @@ class FinanceTransactionCreate(BaseModel):
     type: str = Field(..., pattern=r"^(income|expense)$")
     category: str = Field(..., min_length=1, max_length=50)
     amount: Decimal = Field(..., gt=0)
-    currency: str = Field(default="UZS", max_length=10)
+    currency: str = Field(default_factory=lambda: settings.DEFAULT_CURRENCY, max_length=10)
     description: Optional[str] = None
     animal_id: Optional[UUID] = None
     group_id: Optional[UUID] = None
