@@ -43,6 +43,10 @@ class ParseEntryRequest(BaseModel):
         max_length=2000,
         description="Natural language text from farmer describing farm operations.",
     )
+    farm_id: Optional[str] = Field(
+        None,
+        description="Optional farm UUID to give the AI parser farm-specific context.",
+    )
 
 
 class ParseEntryResponse(BaseModel):

@@ -11,8 +11,17 @@ from app.core.redis import (
     store_parsed_entry,
 )
 from app.repositories.farm_repo import FarmRepository
+from app.repositories.finance_repo import FinanceRepository
 from app.repositories.inventory_repo import InventoryRepository
 from app.repositories.production_repo import ProductionRepository
+
+
+# Maps AI inventory categories to finance expense categories.
+_PURCHASE_EXPENSE_CATEGORY = {
+    "feed": "feed",
+    "medicine": "medicine",
+    "vaccine": "vaccine",
+}
 
 
 PARSING_SYSTEM_PROMPT = """You are an AI assistant for a smart farm management system called AgroSmart AI.
@@ -113,6 +122,7 @@ async def commit_parsed_entry(
     farm_repo = FarmRepository(session)
     prod_repo = ProductionRepository(session)
     inv_repo = InventoryRepository(session)
+    finance_repo = FinanceRepository(session)
 
     farm_id = None
 
@@ -180,17 +190,51 @@ async def commit_parsed_entry(
                 from app.schemas.inventory import InventoryItemCreate
                 from decimal import Decimal
 
+                item_category = op.get("item_category", "product")
+                amount = op.get("amount")
                 purchase_data = InventoryItemCreate(
                     name=op.get("item_name", "Unknown Item"),
-                    category=op.get("item_category", "product"),
+                    category=item_category,
                     unit=op.get("unit", "piece"),
                     current_quantity=Decimal(str(op.get("quantity", 0))),
-                    average_cost=Decimal(str(op.get("amount", 0))) / Decimal(str(op.get("quantity", 1))) if op.get("quantity") and op.get("amount") else None,
+                    average_cost=Decimal(str(amount)) / Decimal(str(op.get("quantity", 1))) if op.get("quantity") and amount else None,
                 )
                 await inv_repo.create(purchase_data, farm_id=farm_id)
+
+                # Record the money spent on the purchase as a finance expense.
+                if amount:
+                    await _record_expense(
+                        finance_repo=finance_repo,
+                        farm_id=farm_id,
+                        user_id=user_id,
+                        amount=Decimal(str(amount)),
+                        category=_PURCHASE_EXPENSE_CATEGORY.get(item_category, "other_expense"),
+                        description=op.get("notes") or f"Sotib olindi: {op.get('item_name', '')}".strip(),
+                    )
                 committed_count += 1
 
             elif op_type == "expense":
+                from decimal import Decimal
+
+                if farm_id is None:
+                    farm_id = await _resolve_farm_id(op, user_id, session)
+                if farm_id is None:
+                    errors.append("Could not determine farm for expense.")
+                    continue
+
+                amount = op.get("amount")
+                if not amount:
+                    errors.append("Amount is required for expense.")
+                    continue
+
+                await _record_expense(
+                    finance_repo=finance_repo,
+                    farm_id=farm_id,
+                    user_id=user_id,
+                    amount=Decimal(str(amount)),
+                    category="other_expense",
+                    description=op.get("notes"),
+                )
                 committed_count += 1
 
         except Exception as e:
@@ -212,3 +256,25 @@ async def _resolve_farm_id(op: Dict[str, Any], user_id: uuid.UUID, session: Asyn
     stmt = select(Farm.id).where(Farm.owner_id == user_id).limit(1)
     result = await session.execute(stmt)
     return result.scalar_one_or_none()
+
+
+async def _record_expense(
+    finance_repo: FinanceRepository,
+    farm_id: uuid.UUID,
+    user_id: uuid.UUID,
+    amount: "Decimal",
+    category: str,
+    description: Optional[str],
+) -> None:
+    from datetime import datetime, timezone
+
+    from app.schemas.finance import FinanceTransactionCreate
+
+    tx = FinanceTransactionCreate(
+        type="expense",
+        category=category,
+        amount=amount,
+        description=description,
+        recorded_at=datetime.now(timezone.utc),
+    )
+    await finance_repo.create(tx, farm_id=farm_id, created_by=user_id)

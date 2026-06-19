@@ -75,7 +75,7 @@ async def get_farm(
 
     animal_count = await animal_repo.get_active_animal_count(farm_id)
     group_count = await group_repo.get_active_group_count(farm_id)
-    inventory_count = await repo.get_member_count(farm_id)
+    inventory_count = await inv_repo.count(filters={"farm_id": farm_id})
 
     response = FarmDetailResponse(
         id=farm.id,

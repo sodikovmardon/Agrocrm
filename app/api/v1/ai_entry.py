@@ -33,6 +33,7 @@ async def parse_entry(
     result = await parse_farmer_text(
         text=request.text,
         session=session,
+        farm_id=request.farm_id,
     )
 
     return ParseEntryResponse(
