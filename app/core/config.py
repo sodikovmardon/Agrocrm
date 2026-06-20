@@ -1,4 +1,5 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import field_validator
 from typing import Optional
 import os
 
@@ -50,6 +51,19 @@ class Settings(BaseSettings):
     CELERY_DAILY_METRICS_MINUTE: int = 0
     CELERY_ALERTS_HOUR: int = 6
     CELERY_ALERTS_MINUTE: int = 0
+
+    @field_validator("DATABASE_URL")
+    @classmethod
+    def _normalize_database_url(cls, v: str) -> str:
+        # Managed hosts (Railway, Heroku, etc.) give a plain postgres URL,
+        # but the async engine needs the +asyncpg driver scheme.
+        if v.startswith("postgresql+asyncpg://"):
+            return v
+        if v.startswith("postgres://"):
+            return v.replace("postgres://", "postgresql+asyncpg://", 1)
+        if v.startswith("postgresql://"):
+            return v.replace("postgresql://", "postgresql+asyncpg://", 1)
+        return v
 
     @property
     def sync_database_url(self) -> str:
