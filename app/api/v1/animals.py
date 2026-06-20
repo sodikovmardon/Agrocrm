@@ -15,8 +15,13 @@ from app.schemas.animals import (
     AnimalUpdate,
 )
 from app.api.v1.auth import get_current_user_id
+from app.api.v1.deps import verify_farm_access
 
-router = APIRouter(prefix="/farms/{farm_id}/animals", tags=["Animals"])
+router = APIRouter(
+    prefix="/farms/{farm_id}/animals",
+    tags=["Animals"],
+    dependencies=[Depends(verify_farm_access)],
+)
 
 
 @router.post("", response_model=AnimalResponse, status_code=status.HTTP_201_CREATED)
@@ -108,7 +113,11 @@ async def delete_animal(
     await repo.delete(animal_id)
 
 
-group_router = APIRouter(prefix="/farms/{farm_id}/groups", tags=["Animal Groups"])
+group_router = APIRouter(
+    prefix="/farms/{farm_id}/groups",
+    tags=["Animal Groups"],
+    dependencies=[Depends(verify_farm_access)],
+)
 
 
 @group_router.post("", response_model=AnimalGroupResponse, status_code=status.HTTP_201_CREATED)

@@ -6,6 +6,7 @@ from uuid import UUID
 from sqlalchemy import and_, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import settings
 from app.models.animal import Animal
 from app.models.inventory import InventoryItem
 from app.models.production import ProductionRecord
@@ -200,13 +201,20 @@ class AnalyticsService:
 
         daily_consumption = total_consumed_kg / Decimal("7") if total_consumed_kg > 0 else Decimal("0")
 
-        remaining_days = float(total_feed_quantity / daily_consumption) if daily_consumption > 0 else float("inf")
+        # No consumption data -> remaining_days is undefined (None), not infinity.
+        # float("inf") is not JSON-serializable and crashes the response.
+        if daily_consumption > 0:
+            remaining_days = float(total_feed_quantity / daily_consumption)
+            critical = remaining_days < settings.ALERT_FEED_DAYS_REMAINING
+        else:
+            remaining_days = None
+            critical = False
 
         return {
             "total_feed_kg": float(total_feed_quantity),
             "daily_consumption_kg": float(daily_consumption),
             "remaining_days": remaining_days,
-            "critical": remaining_days < 5,
+            "critical": critical,
         }
 
     async def get_production_trend(

@@ -7,8 +7,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.services.analytics_service import AnalyticsService
 from app.api.v1.auth import get_current_user_id
+from app.api.v1.deps import verify_farm_access
 
-router = APIRouter(prefix="/farms/{farm_id}/analytics", tags=["Analytics"])
+router = APIRouter(
+    prefix="/farms/{farm_id}/analytics",
+    tags=["Analytics"],
+    dependencies=[Depends(verify_farm_access)],
+)
 
 
 @router.get("/profit-by-animal")

@@ -8,8 +8,13 @@ from app.core.database import get_db
 from app.repositories.production_repo import ProductionRepository
 from app.schemas.production import ProductionRecordCreate, ProductionRecordResponse
 from app.api.v1.auth import get_current_user_id
+from app.api.v1.deps import verify_farm_access
 
-router = APIRouter(prefix="/farms/{farm_id}/production", tags=["Production"])
+router = APIRouter(
+    prefix="/farms/{farm_id}/production",
+    tags=["Production"],
+    dependencies=[Depends(verify_farm_access)],
+)
 
 
 @router.post("", response_model=ProductionRecordResponse, status_code=status.HTTP_201_CREATED)

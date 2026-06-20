@@ -9,8 +9,13 @@ from app.core.database import get_db
 from app.models.alert import Alert
 from app.schemas.alerts import AlertListResponse, AlertResponse, AlertUpdate
 from app.api.v1.auth import get_current_user_id
+from app.api.v1.deps import verify_farm_access
 
-router = APIRouter(prefix="/farms/{farm_id}/alerts", tags=["Alerts"])
+router = APIRouter(
+    prefix="/farms/{farm_id}/alerts",
+    tags=["Alerts"],
+    dependencies=[Depends(verify_farm_access)],
+)
 
 
 @router.get("", response_model=AlertListResponse)

@@ -58,7 +58,7 @@ def detect_all_alerts(self) -> Dict[str, Any]:
                     detected = await service.detect_alerts()
 
                 for alert_data in detected:
-                    enhanced_alert = _enhance_alert_with_llm(alert_data)
+                    enhanced_alert = await _enhance_alert_with_llm(alert_data)
                     enhanced_alert["farm_id"] = str(farm_id)
 
                     async with async_session_factory() as session:
@@ -93,15 +93,13 @@ def detect_all_alerts(self) -> Dict[str, Any]:
     return run_async(_run())
 
 
-def _enhance_alert_with_llm(alert_data: Dict[str, Any]) -> Dict[str, Any]:
+async def _enhance_alert_with_llm(alert_data: Dict[str, Any]) -> Dict[str, Any]:
     try:
         prompt = ALERT_LLM_PROMPT.format(alert_data=json.dumps(alert_data, default=str, ensure_ascii=False))
-        result = run_async(
-            llm_text_response(
-                system_prompt="You are an alert generator. Respond with JSON only.",
-                user_prompt=prompt,
-                temperature=0.3,
-            )
+        result = await llm_text_response(
+            system_prompt="You are an alert generator. Respond with JSON only.",
+            user_prompt=prompt,
+            temperature=0.3,
         )
         enhanced = json.loads(result)
         alert_data["title"] = enhanced.get("title", alert_data.get("title", _generate_alert_title(alert_data.get("type", "unknown"), alert_data.get("severity", "info"))))
@@ -122,7 +120,7 @@ def detect_farm_alerts_single(self, farm_id_str: str) -> Dict[str, Any]:
 
         alerts_created = []
         for alert_data in detected:
-            enhanced = _enhance_alert_with_llm(alert_data)
+            enhanced = await _enhance_alert_with_llm(alert_data)
             enhanced["farm_id"] = str(farm_id)
 
             async with async_session_factory() as session:

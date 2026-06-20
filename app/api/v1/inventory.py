@@ -13,8 +13,13 @@ from app.schemas.inventory import (
     InventoryItemUpdate,
 )
 from app.api.v1.auth import get_current_user_id
+from app.api.v1.deps import verify_farm_access
 
-router = APIRouter(prefix="/farms/{farm_id}/inventory", tags=["Inventory"])
+router = APIRouter(
+    prefix="/farms/{farm_id}/inventory",
+    tags=["Inventory"],
+    dependencies=[Depends(verify_farm_access)],
+)
 
 
 @router.post("", response_model=InventoryItemResponse, status_code=status.HTTP_201_CREATED)

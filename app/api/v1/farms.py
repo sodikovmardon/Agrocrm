@@ -18,6 +18,7 @@ from app.schemas.farms import (
     FarmUpdate,
 )
 from app.api.v1.auth import get_current_user_id, get_current_user_role
+from app.api.v1.deps import verify_farm_access
 
 router = APIRouter(prefix="/farms", tags=["Farms"])
 
@@ -62,6 +63,7 @@ async def list_farms(
 async def get_farm(
     farm_id: UUID,
     user_id: str = Depends(get_current_user_id),
+    _: UUID = Depends(verify_farm_access),
     session: AsyncSession = Depends(get_db),
 ):
     repo = FarmRepository(session)
@@ -100,6 +102,7 @@ async def update_farm(
     request: FarmUpdate,
     user_id: str = Depends(get_current_user_id),
     role: str = Depends(get_current_user_role),
+    _: UUID = Depends(verify_farm_access),
     session: AsyncSession = Depends(get_db),
 ):
     if role not in ("owner", "admin"):
@@ -120,6 +123,7 @@ async def delete_farm(
     farm_id: UUID,
     user_id: str = Depends(get_current_user_id),
     role: str = Depends(get_current_user_role),
+    _: UUID = Depends(verify_farm_access),
     session: AsyncSession = Depends(get_db),
 ):
     if role not in ("owner", "admin"):
@@ -140,6 +144,7 @@ async def add_farm_member(
     request: FarmMemberCreate,
     user_id: str = Depends(get_current_user_id),
     role: str = Depends(get_current_user_role),
+    _: UUID = Depends(verify_farm_access),
     session: AsyncSession = Depends(get_db),
 ):
     if role not in ("owner", "admin"):
@@ -164,6 +169,7 @@ async def remove_farm_member(
     member_user_id: UUID,
     user_id: str = Depends(get_current_user_id),
     role: str = Depends(get_current_user_role),
+    _: UUID = Depends(verify_farm_access),
     session: AsyncSession = Depends(get_db),
 ):
     if role not in ("owner", "admin"):
@@ -182,6 +188,7 @@ async def remove_farm_member(
 async def list_farm_members(
     farm_id: UUID,
     user_id: str = Depends(get_current_user_id),
+    _: UUID = Depends(verify_farm_access),
     session: AsyncSession = Depends(get_db),
 ):
     repo = FarmRepository(session)
