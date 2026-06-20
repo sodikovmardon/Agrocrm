@@ -3,7 +3,7 @@ from typing import AsyncGenerator
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 
 from app.core.config import settings
 from app.core.database import dispose_engine, init_db
@@ -48,6 +48,11 @@ async def global_exception_handler(request: Request, exc: Exception) -> JSONResp
             "error_type": type(exc).__name__,
         },
     )
+
+
+@app.get("/", include_in_schema=False)
+async def root() -> RedirectResponse:
+    return RedirectResponse(url="/docs")
 
 
 @app.get("/health")
